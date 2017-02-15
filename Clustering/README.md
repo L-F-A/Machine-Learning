@@ -1,1 +1,3 @@
-Implement k-means clustering
+Clustering methods
+
+Implement k-means clustering only for the moment 
