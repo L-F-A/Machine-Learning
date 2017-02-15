@@ -1,0 +1,18 @@
+from MachineLearning.NNeighbor import NearestNeighbor
+clf=NearestNeighbor(5)
+from sklearn.datasets import load_iris
+import numpy as np
+iris = load_iris()
+X_train, X_test, y_train, y_test = cross_validation.train_test_split(iris.data, iris.target, test_size=0.4, random_state=1)
+clf.train(X_train,y_train)
+pred=clf.query(X_test)
+pred
+
+
+from sklearn.metrics import classification_report, accuracy_score
+from operator import itemgetter
+import numpy as np
+import math
+from collections import Counter
+
+from NNTest import main
