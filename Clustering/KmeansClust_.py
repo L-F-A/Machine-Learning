@@ -33,66 +33,6 @@ class Kmeans:
                         indNew = np.where(cumProd >= r)[0][0]
 		return np.array(mean_start)
 
-
-	#def train(self,X):
-	#Lloyd's Kmean runned ninit times
-	#	self.Nl = X.shape[0]
-	#	inertia0 = 0
-		#We start by randomly asigning the clusters center to be k random
-    		#points in the data
-		
-	#	for rinit in range(0,self.ninit):
-	#		possible_ind = range(0,self.Nl)
-			#I shuffle twice
-	#		np.random.shuffle(possible_ind)
-	#		np.random.shuffle(possible_ind)
-	#		ind_mean_start = possible_ind[0:self.k]
-    	#		mean_start = X[ind_mean_start,:]
-    	#		means_K = mean_start
-    	#	
-	#		count = 1
-	#		looping = 1
-	#
-	#		while looping == 1:
-	#		
-	#			if self.typeD == 'Euc':
-	#				Dist = DistancesMatrix(means_K,X,self.k,self.Nl,self.typeD,T=False,sqr=False)
-	#			elif self.typeD == 'Man':
-	#				Dist = DistancesMatrix(means_K,X,self.k,self.Nl,self.typeD)
-	#
-	#			ind_cluster = Dist.argmin(axis=1)
-	#			means_K0 = means_K.copy()
-	#
-	#			Xc = [] #List that will have k different elements
-	#			for rk in range(0,self.k):
-	#				ind_NinClustk = np.where(ind_cluster == rk)[0]
-	#				Xc.append(X[ind_NinClustk,:])
-	#				means_K[rk] = np.mean(Xc[rk],axis=0)
-	#
-	#			err = np.sqrt( np.sum( (means_K-means_K0)**2,axis=1)  )
-				#If each centers of clusters is converged to within the tolerance,
-        			#the calculation is stopped or if the number of iterations becomes
-        			#too large
-        #			if ( np.sum((err<=self.tol).astype(int)) == self.k) or (count >= self.iter):
-        #   				if count >= 500:
-        #        				warnings.warn('The function stopped because the number of iterations exceeded the maximum number alloyed')
-        #   				looping = 0
-        #			else: 
-        #    				count = count+1
-
-	#		inertia=0
-        #               for r_inertia in range(0,self.k):
-        #                        inertia = inertia+np.sum(DistancesMatrix(means_K[r_inertia,:].reshape(1,X.shape[1]),Xc[r_inertia],1,Xc[r_inertia].shape[0],self.typeD,T=False,sqr=False))
-
-	#		if (inertia<inertia0) or (rinit == 0):
-	#			#print rinit
-	#			self.means = means_K
-	#			self.Xc = Xc
-	#			self.count = count
-	#			self.iterinit = rinit
-	#			self.inertia=inertia
-	#		inertia0 = inertia
-	#
         def train(self,X):
 
 		self.Nl=X.shape[0]
