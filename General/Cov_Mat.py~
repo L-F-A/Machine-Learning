@@ -1,0 +1,99 @@
+import numpy as np
+import warnings
+
+#Return the covariance matrix and its svd decomposition
+def CovMat(f_exact,f):
+
+	D=f_exact-f
+	MCOV=np.cov(D)
+	U, S, Vt = np.linalg.svd(M)
+	V = Vt.T
+	return MCOV,U,S,V
+
+
+#########################################################################################
+#             Covariance matrix from truncated svd with intact diagonal                 #
+#                                                                                       # 
+#               If the eigenvectors are h_k and eigenvalues lambda_k:                   #
+#                                                                                       #
+# SIGMA_hat = sum_k=1^p lambda_k h_kh_k^T + diag( sum_{k=p+1}^end lambda_k h_kh_k^T  )  #
+#                                                                                       #
+#########################################################################################
+def truncatedCov(U,S,V,SIGMA,p)
+
+        s=np.array(np.diag(S))
+        s[p:]=0.
+        Shat=np.diag(s)
+
+        SIGMA_Trunc=U.dot( Shat.dot(V.T) )
+        #We keep the diagonal intact
+        np.fill_diagonal(SIGMA_Trunc,np.diag(SIGMA))
+        #Make sure it is symmetric in case finite precision effect showed its 
+        #ugly head
+        return 0.5*(SIGMA_Trunc.T+SIGMA_Trunc)
+
+#Return Lower Cholesky decomposition of a covariance matrix
+def Lchol(SIGMA)
+
+	return np.linalg.cholesky(SIGMA)
+
+
+def nearestSPD(A,testPD=False,ModIfNotPD=False):
+#########################################################################################
+#	This is a python implementation of the Matlab code by John D'Errico		#
+#				that can be found at:					#
+#	https://www.mathworks.com/matlabcentral/fileexchange/42885-nearestspd		#
+#########################################################################################
+#											#
+# nearestSPD - the nearest (in Frobenius norm) Symmetric Positive Definite matrix to A	#
+#											#
+# From Higham: "The nearest symmetric positive semidefinite matrix in the		#
+# Frobenius norm to an arbitrary real matrix A is shown to be (B + H)/2,		#
+# where H is the symmetric polar factor of B=(A + A')/2."				#
+#											#
+# http://www.sciencedirect.com/science/article/pii/0024379588902236			#
+#											#
+# arguments: (input)									#
+#  A - 	square matrix, which will be converted to the nearest Symmetric			#
+#    	Positive Definite Matrix.							#
+#											#
+# Arguments: (output)									#
+#  Ahat - The matrix chosen as the nearest SPD matrix to A.				#
+#########################################################################################
+
+	row=A.shape[0]
+	col=A.shape[1]
+
+	if row != col:
+		warnings.warn('Matrix A must be square')
+		return
+
+	B=0.5*(A+A.T)
+	U, S, Vt = np.linalg.svd(B)
+        V = Vt.T
+	H= V.dot( S.dot(V.T) )
+	Ahat=0.5*(B+H)
+	Ahat=0.5*(Ahat+Ahat.T)
+	
+	if testPD is False:
+		return Ahat
+	else:
+	#testing if Ahat is positive definite. If not, perhaps tweak it
+		p=1
+		k=0.
+		while p!=0:
+			try:
+				L=np.linalg.cholesky(Ahat)
+				p=0
+				return Ahat,True
+			except np.linalg.linalg.LinAlgError:
+				
+				if ModIfNotPD is False:
+					p=0
+					return Ahat,False
+				else:
+				#Ahat is not pos. def. Tweak by adding tiny multiple of identity matrix
+				#might be costly since calculating eigenvalues every time 
+					k+=1.
+					mineig=np.min(np.linalg.eigvalsh(Ahat))
+					Ahat=Ahat+(-mineig*k**2+np.spacing(mineig))*np.identity(row)

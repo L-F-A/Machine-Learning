@@ -1,0 +1,33 @@
+def confusion_MI(ytrue,ypred):
+	#Could be optimized!!!!!
+		if ytrue.ndim != 1:
+			if ytrue.shape[0] == 1:
+				s=ytrue.shape[1]
+			else:
+				s=ytrue.shape[0]
+			ytrue=ytrue.reshape((s,))
+		if ypred.ndim != 1:
+                        if ypred.shape[0] == 1:
+                                s=ypred.shape[1]
+                        else:
+                                s=ypred.shape[0]
+                        ypred=ypred.reshape((s,))
+		
+		yd=ypred-ytrue
+		FN = yd[yd==-1]
+		FP = len(yd[yd==1])
+		
+		ind_pos = np.where(ytrue==1)[0]
+		ind_neg = np.where(ytrue==0)[0]
+		TP=np.sum(ypred[ind_pos])
+		TN=len(ind_neg) - np.sum(ypred[ind_neg])
+		C=np.array([[TN,FP],[FN,TP]])
+		Cp=C/len(np.float(ytrue))
+		#We also want the mutual information
+		px=np.sum(Cp,axis=1)
+		py=np.sum(Cp,axis=0)
+		HX=-np.sum(px*np.log(px+1e-20))
+		HY=-np.sum(py*np.log(py+1e-20))
+		HXY=-np.sum(Cp*np.log(Cp+1e-20))
+		MI=HX+HY-HXY
+		return MI,C
