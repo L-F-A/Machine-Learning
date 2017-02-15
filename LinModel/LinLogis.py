@@ -2,93 +2,6 @@ import numpy as np
 import warnings
 #Everything else is imported locally when needed
 
-class LogisReg:
-##########################################################################################################################
-#                                     		     Logistic regression	                                         #
-#                                                                                                                        #
-#                           Louis-Francois Arsenault, Columbia University la2518@columbia.edu (2016)                     #
-##########################################################################################################################
-#                                                                                                                        #
-#       INPUTS:                                                                                                          #
-#                                                                                                                        #
-
-
-#Add comments above
-#Add stochastic gradient descent as for the regularized version below
-
-	def __init__(self,solver='sp',eta=None,tol=None,Nbatch=None,epochMax=None):
-		#Logistic regression with no regularization
-		if solver is 'sg':
-                        self.Nbatch=Nbatch
-                        self.eta=eta
-                        self.epochMax=epochMax
-                        self.tol=tol
-		elif (solver is not 'sp') or (solver is not 'sg'):
-			raise ValueError('solver must be sp, sg only ')
-
-	def __logLike_logistic(self,w,XX,y):
-                WdotX = XX.dot(w)
-                l1 = -np.sum(np.log(1.+np.exp(WdotX)))
-                l2 = np.sum(y.dot(WdotX))
-                return -(l1+l2)
-
-        def __logLike_logistic_der(self,w,XX,y):
-                WdotX = XX.dot(w)
-                p = 1./(1.+np.exp(-WdotX))
-                dyp = y-p
-                dl=-dyp.dot(XX)
-                return dl
-
-	def __logLike_logistic_der_forSG(self,w,XX,y):
-                WdotX = XX.dot(w)
-                p = 1./(1.+np.exp(-WdotX))
-                dyp = y-p
-                dl=-dyp*XX
-                return dl
-
-	def train(self,X,y):
-		from scipy.optimize import minimize
-		OneVec = np.ones((X.shape[0],1))
-                XX = np.concatenate((X, OneVec), axis=1)
-		w_0=np.zeros(XX.shape[1])
-		if solver is 'sp':
-			tupARG = (XX,y)
-			res = minimize(self.__logLike_logistic,w_0,args=tupARG,method='Newton-CG', jac=self.__logLike_logistic_der,tol=1e-8)
-			self.w = res.x
-		else:
-			from NumMethods import StochGrad
-			###################################################################################
-			#Must deal with having args=None and the fact that there is no lambda to define damping
-			##################################################################################
-                        #if self.Nbatch==1:
-                        #        w_0,ep,ite=StochGrad(self.__logLike_logistic_der_forSG,w_0,XX,y,self.Nlearn,None,1./self.Nlearn,eta=self.eta,tol=self.tol,epochMax=self.epochMax,Nbatch=sel$
-                        #else:
-                        #        w_0,ep,ite=StochGrad(self.__logLike_logistic_der,w_0,XX,y,self.Nlearn,None,1./self.Nlearn,eta=self.eta,tol=self.tol,epochMax=self.epochMax,Nbatch=self.Nbat$
-                        #self.w=w_0
-                        #self.epoch=ep
-			
-			
-	def query(self,x,threshold=0.5):
-		OneVec = np.ones((x.shape[0],1))
-                XX = np.concatenate((x, OneVec), axis=1)
-                WdotX = XX.dot(self.w)
-                p = 1./(1.+np.exp(-WdotX))
-                predic = np.zeros(len(p))
-                predic[p>threshold] = 1.
-                ProbPred = np.zeros((2,len(p)))
-                ProbPred[0,:] = p
-                ProbPred[1,:] = predic
-                return ProbPred
-
-	def score(self,X,ytrue):
-	#Return the % of correct predictions
-		Predic = self.query(X)
-		ypredic = Predic[1,:]
-		return 1-np.sum(np.absolute(ypredic-ytrue))/len(ytrue)
-
-##########################################################################################################################
-
-
 class LogisRegRegu:
 #########################################################################################################################
 #                                     Logistic regression with L2 or L1 regularization                                  #
@@ -208,28 +121,18 @@ class LogisRegRegu:
 
 		elif self.solver is 'gd':
 		#Using homemade gradient descent found in NumMethods directory
-			from NumMethods import GradDescSteep#,GradDesc0,GradDesc,Rprop
+			from NumMethods import GradDescSteep
 			w_0,ite=GradDescSteep(self.__logLike_logistic_der_L2,w_0,self.eta,self.tol,self.tol_rel,10000,args=(XX,y,lam))
-			#w_02,ite=GradDesc0(self.__logLike_logistic_der_L2,w_0,self.eta,self.tol,self.tol_rel,10000,args=(XX,y,lam))
-			#w_03,ite=GradDesc(self.__logLike_logistic_L,self.__logLike_logistic_der_L2,w_0,self.eta,self.tol,self.tol_rel,10000,args=(XX,y,lam))
-			#w_04,ite=Rprop(self.__logLike_logistic_der_L2,w_0,self.eta,self.tol,self.tol_rel,10000,args=(XX,y,lam))
-			#self.w=[w_01,w_02,w_03,w_04]
 			self.w=w_0
 			self.ite=ite
 
 		else:
 		#Using stochastic gradient descent found in NumMethos directory
-			from NumMethods import StochGrad#,StochAdaGrad,StochAdaGradDecay,StochAdaDelta,StochAdam,StochAdaMax
+			from NumMethods import StochGrad
 			if self.Nbatch==1:
 				w_0,ep,ite,mess=StochGrad(self.__logLike_logistic_der_L2_forSG,w_0,XX,y,self.Nlearn,(lam/self.Nlearn),lam/self.Nlearn,eta=self.eta,tol=self.tol,epochMax=self.epochMax,Nbatch=self.Nbatch)
-				#w_02,ep,ite,mess=StochAdaGrad(self.__logLike_logistic_der_L2_forSG,w_0,XX,y,self.Nlearn,(lam/self.Nlearn),eta=self.eta,tol=self.tol,epochMax=self.epochMax)
-				#w_03,ep,ite,mess=StochAdaGradDecay(self.__logLike_logistic_der_L2_forSG,w_0,XX,y,self.Nlearn,(lam/self.Nlearn),eta=self.eta,beta=1e-2,tol=self.tol,epochMax=self.epochMax)
-				#w_04,ep,ite,mess=StochAdaDelta(self.__logLike_logistic_der_L2_forSG,w_0,XX,y,self.Nlearn,(lam/self.Nlearn),eta=self.eta,beta=1e-2,tol=self.tol,epochMax=self.epochMax)
-				#w_05,ep,ite,mess=StochAdam(self.__logLike_logistic_der_L2_forSG,w_0,XX,y,self.Nlearn,(lam/self.Nlearn),eta=self.eta,beta1=1e-2,beta2=1e-2,tol=self.tol,epochMax=self.epochMax)
-				#w_06,ep,ite,mess=StochAdaMax(self.__logLike_logistic_der_L2_forSG,w_0,XX,y,self.Nlearn,(lam/self.Nlearn),eta=self.eta,beta1=1e-3,beta2=1e-3,tol=self.tol,epochMax=self.epochMax)
 			else:
-				w_0,ep,ite=StochGrad(self.__logLike_logistic_der_L2,w_0,XX,y,self.Nlearn,(lam/self.Nlearn),lam/self.Nlearn,eta=self.eta,tol=self.tol,epochMax=self.epochMax,Nbatch=self.Nbatch)
-			#self.w=[w_01,w_02,w_03,w_04,w_05,w_06]
+				w_0,ep,ite,mess=StochGrad(self.__logLike_logistic_der_L2,w_0,XX,y,self.Nlearn,(lam/self.Nlearn),lam/self.Nlearn,eta=self.eta,tol=self.tol,epochMax=self.epochMax,Nbatch=self.Nbatch)
 			self.w=w_0
                         self.epoch=ep
 
