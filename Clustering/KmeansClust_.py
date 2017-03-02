@@ -39,10 +39,10 @@ class Kmeans:
 		inertia0=0.
 		for rinit in range(0,self.ninit):
 			
-			if self.initM is 'km++':
+			if self.initM == 'km++':
 			#kmean++
 				means_K = self.__CinitPlusPlus(X)
-			elif self.initM is Ll:
+			elif self.initM == 'Ll':
 			#Lloyd's
 				possible_ind = range(0,self.Nl)
                         	#I shuffle twice
@@ -51,7 +51,7 @@ class Kmeans:
                        	 	ind_mean_start = possible_ind[0:self.k]
                         	means_K = X[ind_mean_start,:]
 			else:
-				srtWarn='This initialization '+self.initM+' is not implemented or does not exist. kmean++ will be used!'
+				strWarn='This initialization '+self.initM+' is not implemented or does not exist. kmean++ will be used!'
 				warnings.warn(strWarn)
 				means_K = self.__CinitPlusPlus(X)
 
