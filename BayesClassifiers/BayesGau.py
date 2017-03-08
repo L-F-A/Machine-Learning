@@ -65,8 +65,7 @@ class BayesGau:
 			XMU=self.XX[r]-mu_k[r,:]
 			sig_temp=np.dot(XMU.T,XMU)/float(self.XX[r].shape[0])
 			Sig_k.append(sig_temp)
-                        #Sig_k.append(np.cov(self.XX[r],rowvar=False,bias=True))
-			#Cholesky factorization of the covariance matrix
+                        #Cholesky factorization of the covariance matrix
                         L_k.append( np.linalg.cholesky(Sig_k[r])  )
                 self.mu_k=mu_k
                 self.Sig_k=Sig_k
@@ -82,7 +81,6 @@ class BayesGau:
 			XMU=self.XX[r]-mu_k[r,:]
                         sig_temp=np.sum(XMU**2,axis=0)/float(self.XX[r].shape[0])
                         Sig_k.append(sig_temp)
-			#Sig_k.append(np.var(self.XX[r],axis=0,ddof=0))
 		self.mu_k=mu_k
                 self.Sig_k=Sig_k
 
