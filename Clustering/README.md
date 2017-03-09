@@ -5,4 +5,4 @@ Only two implemented for the moment
   - Gaussian mixture solved by EM.
   
       1) For the moment, only spherical covariance, more to come shortly
-      2) Need to improve probability calculation usin log, to be dobe very shortly
+      2) Need to improve probability calculation using log, to be done very shortly as for the Bayes classifiers cases
