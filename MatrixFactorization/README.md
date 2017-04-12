@@ -1,3 +1,7 @@
+Probabilistic matrix factorization: LSMF_Explicit
+
+        -Need to add possibility that the input matrix is already in a sparse format: Easy
+        
 Non negative matrix factorization
 
   - Working version
