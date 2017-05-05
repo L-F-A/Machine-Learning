@@ -27,7 +27,6 @@ class KerRidgeReg:
 		self.Ker = KernelCalc(X,X,self.Nlearn,self.Nlearn,self.var,typeK=self.typeK,typeD=self.typeD,T=True)
 		Klam = self.Ker + lam*np.identity(self.Nlearn)
 
-		#Is it faster to do it at once ( np.linalg.solve(Klam,y)  )?
 		try:
 			self.L = np.linalg.cholesky(Klam)
 			self.alpha=sp.linalg.cho_solve((self.L,True),y)
