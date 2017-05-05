@@ -5,7 +5,7 @@ class KerRidgeReg:
 ##########################################################################################################################
 #                                         Kernel Ridge Regression/Gaussian process                                       #
 #                                                                                                                        #
-#                           Louis-Francois Arsenault, Columbia University la2518@columbia.edu (2016)                     #
+#                           Louis-Francois Arsenault, Columbia University la2518@columbia.edu (2013-2017)                     #
 ##########################################################################################################################
 #                                                                                                                        #
 #       INPUTS:                                                                                                          #
