@@ -54,7 +54,7 @@ class KerRidgeReg:
 		except np.linalg.linalg.LinAlgError:
 			print 'K+lambda*I not positive definite, solving anyway, but beware!!'#postvar in query will not work, need to be corrected
 			self.alpha = np.linalg.solve(Klam,y)
-
+			self.L=None
 	def query(self,Xt,postVar=False):
 
 		KerTest = KernelCalc(self.X,Xt,self.Nlearn,Xt.shape[0],self.var,typeK=self.typeK,typeD=self.typeD,T=False)
