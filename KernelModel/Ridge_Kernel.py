@@ -15,7 +15,7 @@ class KerRidgeReg:
         def __init__(self):
                 pass
 
-	def train(self,X,y,lam,var,typeK,typeD):
+	def train(self,X,y,lam,var,typeK,typeD,xinterval=None):
 
 		self.Nlearn = X.shape[0]
 		self.Nfeat = X.shape[1]
@@ -24,7 +24,9 @@ class KerRidgeReg:
 		self.var = var.copy()
 		self.typeK = typeK
 		self.typeD = typeD
-		self.Ker = KernelCalc(X,X,self.Nlearn,self.Nlearn,self.var,typeK=self.typeK,typeD=self.typeD,T=True)
+		self.xinterval=xinterval
+		
+		self.Ker = KernelCalc(X,X,self.Nlearn,self.Nlearn,self.var,typeK=self.typeK,typeD=self.typeD,T=True,xinterval=self.xinterval)
 		Klam = self.Ker + lam*np.identity(self.Nlearn)
 
 		try:
@@ -57,7 +59,7 @@ class KerRidgeReg:
 			self.L=None
 	def query(self,Xt,postVar=False):
 
-		KerTest = KernelCalc(self.X,Xt,self.Nlearn,Xt.shape[0],self.var,typeK=self.typeK,typeD=self.typeD,T=False)
+		KerTest = KernelCalc(self.X,Xt,self.Nlearn,Xt.shape[0],self.var,typeK=self.typeK,typeD=self.typeD,T=False,xinterval=self.xinterval)
 		if postVar is False:
 			return KerTest.dot(self.alpha)
 		elif postVar is True: #return the Gaussian process posterior variance change k_test^T(K+lambda*I)^-1k_test
