@@ -34,7 +34,7 @@ class KerRidgeReg:
 		except np.linalg.linalg.LinAlgError:
                         print 'K+lambda*I not positive definite, solving anyway, but beware!!' #postvar in query will not work, need to be corrected
                         self.alpha = np.linalg.solve(Klam,y)
-
+			self.L=None
 	def train_withKer(self,X,y,lam,var,Ker,typeK,typeD):
 	#If the Kernel matrix is already provided
 
@@ -62,18 +62,24 @@ class KerRidgeReg:
 		if postVar is False:
 			return KerTest.dot(self.alpha)
 		elif postVar is True: #return the Gaussian process posterior variance change k_test^T(K+lambda*I)^-1k_test
-			v=np.linalg.solve(self.L,KerTest.transpose())
-			print v.shape
-			return KerTest.dot(self.alpha), v.transpose().dot(v)
+			if self.L is None:
+				print 'K+lambda*I not positive definite and thus there exist no Cholesky decomposition, the posterior variance is not returned'
+				return KerTest.dot(self.alpha), None
+			else:
+				v=np.linalg.solve(self.L,KerTest.transpose())
+				return KerTest.dot(self.alpha), v.transpose().dot(v)
 	
 	def query_withKer(self,Xt,KerTest,postVar=False):
 
                 if postVar is False:
                         return KerTest.dot(self.alpha)
                 elif postVar is True: #return the Gaussian process posterior variance change k_test^T(K+lambda*I)^-1k_test
-                        v=np.linalg.solve(self.L,KerTest.transpose())
-                        print v.shape
-                        return KerTest.dot(self.alpha), v.transpose().dot(v)
+                        if self.L is None:
+				print 'K+lambda*I not positive definite and thus there exist no Cholesky decomposition, the posterior variance is not returned'
+				return KerTest.dot(self.alpha), None
+			else:
+				v=np.linalg.solve(self.L,KerTest.transpose())
+                        	return KerTest.dot(self.alpha), v.transpose().dot(v)
 
 	def score(self,ypredic,ytrue,metric='MAE'):
 		#Calculate the mean absolute error MAE by default, mean square error MSE
