@@ -1,11 +1,12 @@
 import numpy as np
+import scipy as sp
 from MachineLearning.KernelModel import KernelCalc
 
 class KerRidgeReg:
 ##########################################################################################################################
 #                                         Kernel Ridge Regression/Gaussian process                                       #
 #                                                                                                                        #
-#                           Louis-Francois Arsenault, Columbia University la2518@columbia.edu (2013-2017)                     #
+#                       Louis-Francois Arsenault, Columbia Universisty (2013-2017), la2518@columbia.edu			 #
 ##########################################################################################################################
 #                                                                                                                        #
 #       INPUTS:                                                                                                          #
@@ -29,8 +30,7 @@ class KerRidgeReg:
 		#Is it faster to do it at once ( np.linalg.solve(Klam,y)  )?
 		try:
 			self.L = np.linalg.cholesky(Klam)
-			nu = np.linalg.solve(self.L,y)
-			self.alpha = np.linalg.solve(self.L.transpose(),nu)
+			self.alpha=sp.linalg.cho_solve((self.L,True),y)
 		except np.linalg.linalg.LinAlgError:
                         print 'K+lambda*I not positive definite, solving anyway, but beware!!' #postvar in query will not work, need to be corrected
                         self.alpha = np.linalg.solve(Klam,y)
@@ -51,8 +51,7 @@ class KerRidgeReg:
                 #Is it faster to do it at once ( np.linalg.solve(Klam,y)  ) ?
 		try:
                 	self.L = np.linalg.cholesky(Klam)
-                	nu = np.linalg.solve(self.L,y)
-                	self.alpha = np.linalg.solve(self.L.transpose(),nu)
+                	self.alpha=sp.linalg.cho_solve((self.L,True),y)
 		except np.linalg.linalg.LinAlgError:
 			print 'K+lambda*I not positive definite, solving anyway, but beware!!'#postvar in query will not work, need to be corrected
 			self.alpha = np.linalg.solve(Klam,y)
