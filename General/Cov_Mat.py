@@ -18,7 +18,7 @@ def CovMat(f_exact,f):
 # SIGMA_hat = sum_k=1^p lambda_k h_kh_k^T + diag( sum_{k=p+1}^end lambda_k h_kh_k^T  )  #
 #                                                                                       #
 #########################################################################################
-def truncatedCov(U,S,V,SIGMA,p)
+def truncatedCov(U,S,V,SIGMA,p):
 
         s=np.array(np.diag(S))
         s[p:]=0.
@@ -32,7 +32,7 @@ def truncatedCov(U,S,V,SIGMA,p)
         return 0.5*(SIGMA_Trunc.T+SIGMA_Trunc)
 
 #Return Lower Cholesky decomposition of a covariance matrix
-def Lchol(SIGMA)
+def Lchol(SIGMA):
 
 	return np.linalg.cholesky(SIGMA)
 
