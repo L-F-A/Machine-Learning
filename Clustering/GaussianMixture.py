@@ -302,7 +302,8 @@ class GMM:
 			for r_k in range(self.K):
                                 XMU=X-means_K[r_k,:]
                                 detSig=np.prod(sigk2[r_k])
-                                znk[:,r_k]=Thetak[r_k]*np.exp(-0.5*np.diag(np.dot(XMU,XMU.T/sigk2[r_k].reshape(len(sigk2[r_k]),1))))/(np.sqrt( (2.*np.pi)**X.shape[1]*detSig ) )
+				znk[:,r_k]=Thetak[r_k]*np.exp(-0.5*np.einsum('ij,ji->i',XMU,XMU.T/sigk2[r_k].reshape(len(sigk2[r_k]),1)))/(np.sqrt( (2.*np.pi)**X.shape[1]*detSig ) )
+                                #znk[:,r_k]=Thetak[r_k]*np.exp(-0.5*np.diag(np.dot(XMU,XMU.T/sigk2[r_k].reshape(len(sigk2[r_k]),1))))/(np.sqrt( (2.*np.pi)**X.shape[1]*detSig ) )
 			#################################################################################         
                         #                      Starting Expectation Maximization loops                  #
                         #################################################################################
@@ -320,7 +321,8 @@ class GMM:
                                 	XMU=X-means_K[r_k,:]
 					sigk2.append( np.sum(XMU**2*znk[:,r_k].reshape(len(znk[:,r_k]),1),axis=0)/zk[r_k] )
                                 	detSig=np.prod(sigk2[r_k])
-                                	znk[:,r_k]=Thetak[r_k]*np.exp(-0.5*np.diag(np.dot(XMU,XMU.T/sigk2[r_k].reshape(len(sigk2[r_k]),1))))/(np.sqrt( (2.*np.pi)**X.shape[1]*detSig ) )
+					znk[:,r_k]=Thetak[r_k]*np.exp(-0.5*np.einsum('ij,ji->i',XMU,XMU.T/sigk2[r_k].reshape(len(sigk2[r_k]),1)))/(np.sqrt( (2.*np.pi)**X.shape[1]*detSig ) )
+                                	#znk[:,r_k]=Thetak[r_k]*np.exp(-0.5*np.diag(np.dot(XMU,XMU.T/sigk2[r_k].reshape(len(sigk2[r_k]),1))))/(np.sqrt( (2.*np.pi)**X.shape[1]*detSig ) )
 
 				#Likelihood used as cost function, convergence when stop changing
                                 LL=np.sum(np.log(np.sum(znk,axis=1)))/self.Nl
@@ -349,7 +351,8 @@ class GMM:
                         	XMU=X-means_K[r_k,:]
                         	ETA=np.linalg.solve(L_k[r_k],XMU.T)
                         	detSig=np.prod(np.diag(L_k[r_k])**2)
-                        	znk[:,r_k]=Thetak[r_k]*np.exp(-0.5*np.diag(np.dot(ETA.T,ETA)))/(np.sqrt( (2.*np.pi)**X.shape[1]*detSig ) )
+				znk[:,r_k]=Thetak[r_k]*np.exp(-0.5*np.einsum('ij,ji->i',ETA.T,ETA))/(np.sqrt( (2.*np.pi)**X.shape[1]*detSig ) )
+                        	#znk[:,r_k]=Thetak[r_k]*np.exp(-0.5*np.diag(np.dot(ETA.T,ETA)))/(np.sqrt( (2.*np.pi)**X.shape[1]*detSig ) )
 			#################################################################################         
                         #                      Starting Expectation Maximization loops                  #
                         #################################################################################
@@ -370,7 +373,8 @@ class GMM:
 					L_k.append(np.linalg.cholesky(sigk2[r_k]))
 					ETA=np.linalg.solve(L_k[r_k],XMU.T)
                                 	detSig=np.prod(np.diag(L_k[r_k])**2)
-                                	znk[:,r_k]=Thetak[r_k]*np.exp(-0.5*np.diag(np.dot(ETA.T,ETA)))/(np.sqrt( (2.*np.pi)**X.shape[1]*detSig ) )
+					znk[:,r_k]=Thetak[r_k]*np.exp(-0.5*np.einsum('ij,ji->i',ETA.T,ETA))/(np.sqrt( (2.*np.pi)**X.shape[1]*detSig ) )
+                                	#znk[:,r_k]=Thetak[r_k]*np.exp(-0.5*np.diag(np.dot(ETA.T,ETA)))/(np.sqrt( (2.*np.pi)**X.shape[1]*detSig ) )
 
 				#Likelihood used as cost function, convergence when stop changing
                                 LL=np.sum(np.log(np.sum(znk,axis=1)))/self.Nl
