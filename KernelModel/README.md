@@ -1,8 +1,11 @@
 Some kernel machine learning methods.
 
   1-Kernels: Few Kernels
+  
   2-Kernel Ridge Regression
+  
   3-Kernel SVM
+  
   4-One class SVM with Kernels
 
 The Kernel Ridge Regression class also offers a fit method (aka Gaussian process) to obtain the hyperparameters
