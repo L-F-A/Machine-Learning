@@ -1,11 +1,15 @@
 import numpy as np
 from MachineLearning.Distances import DistancesMatrix
+import scipy as sp
+
+
+#Need to add the possibility to mix kenerls together like K1+K2, K1*K2 etc
 
 def KernelCalc(X,Xt,Nl,Nt,var=None,typeK='Poly',typeD=None,T=False,xinterval=None):
 ##########################################################################################################################
 #                                                  Kernel		                                                 #
 #                                                                                                                        #
-#                   Louis-Francois Arsenault, Columbia University la2518@columbia.edu (2013-2017)                        #
+#                           Louis-Francois Arsenault, Columbia University la2518@columbia.edu (2016)                     #
 ##########################################################################################################################
 #                                                                                                                        #
 #       INPUTS:                                                                                                          #
@@ -14,11 +18,11 @@ def KernelCalc(X,Xt,Nl,Nt,var=None,typeK='Poly',typeD=None,T=False,xinterval=Non
 #    var   :  An array containing the hyperparameters of the choosen kernel, its #
 #             length will depend upon the specific kernel			 #
 #    typeK :  Which kernel : polynomial 'Poly', Gaussian 'Gau', Exponential 'Exp'# 
-#             or Matern 5/2 'Matern52' and 'Gau_TriDiag' 			 #
-#	      (Gaussian Kernel with tri-diagonal covariance) are possible	 #
+#             or Matern 5/2 'Matern52' are possible				 #
 #    typeD :  Which distance metric to use for non-poly kernel: Euclidean 'Euc', #
 #             Euclidean for continuous functions 'Euc_C' or Manhattan 'Man'	 #
 ##################################################################################
+
 	if typeK == 'Poly':
 		return ( var[1] + var[0]*Xt.dot(X.transpose()) )**var[2]
 	else:
@@ -60,6 +64,52 @@ def KernelCalc(X,Xt,Nl,Nt,var=None,typeK='Poly',typeD=None,T=False,xinterval=Non
                                 return K
 #########################################################################################################################
 
+def KernelCalcDer(X,Xt,Nl,Nt,var=None,typeK='Gau',typeD='Euc',T=False,xinterval=None):
+
+#	Return K,dK/dsig where K is the Kernel matrix and dK/dsig is a matrix where each component is the derivative with
+#	respect to sigma i.e. component ij is dK_ij/dsig 
+
+        if (typeD == 'Euc') and (typeK == 'Gau'):
+
+                D = DistancesMatrix(X,Xt,Nl,Nt,typeD='Euc',T=T,sqr=False)
+                K=np.exp(-0.5*D/(var[0]**2))
+                return K,D*K/var[0]**3
+
+        elif (typeD == 'Euc_Cont') and (typeK == 'Gau'):
+
+                D=DistancesMatrix(X,Xt,Nl,Nt,typeD='Euc_Cont',T=T,sqr=False,xinterval=xinterval)
+                K=np.exp(-0.5*D/(var[0]**2))
+                return K,D*K/var[0]**3
+
+        else:
+                if   typeD=='Euc':
+                        D=DistancesMatrix(X,Xt,Nl,Nt,typeD='Euc',T=T,sqr=True)
+                elif typeD=='Man':
+                        D=DistancesMatrix(X,Xt,Nl,Nt,typeD='Man',T=T)
+                elif typeD=='Euc_Cont':
+                        D=DistancesMatrix(X,Xt,Nl,Nt,typeD='Euc_Cont',T=T,sqr=True,xinterval=xinterval)
+		else:
+                        print 'Distance of type', typeD, ' is not implemented'
+
+                if typeK=='Gau':
+
+                        K=np.exp(-0.5*D**2/(var[0]**2))
+                        return K,D**2*K/var[0]**3
+
+                elif typeK == 'Exp':
+
+                        K=np.exp(-D/var[0])
+                        return K,D*K/var[0]**2
+
+                elif typeK == 'Matern52':
+		
+                        dij = np.sqrt(5.)*D/var[0]
+                        K=(1.+ dij + (dij**2)/3.)*np.exp(-dij)
+                        return K, dij/var[0]*K - ( dij + 2.*dij**2/3.  )*np.exp(-dij)/var[0]
+
+		else:
+                	print 'Kernel of type', typeK, ' is not implemented'
+
 def KernelCalc_withD(D,var=None,typeK='Gau',sqEuc=False):
 ##########################################################################################################################
 #                                                         Kernel                                                         #
@@ -89,22 +139,23 @@ def KernelCalc_withD(D,var=None,typeK='Gau',sqEuc=False):
 		print 'Kernel of type', typeK, ' is not implemented'
 #########################################################################################################################
 
+
 def KernelCalcDer_withD(D,var=None,typeK='Gau',sqEuc=False):
 #The first in return is the kernel, the second is the first derivative
-        if (typeK == 'Gau') and (sqEuc==True):
-                K=np.exp(-0.5*D/(var[0]**2))
+
+	if (typeK == 'Gau') and (sqEuc==True):
+		K=np.exp(-0.5*D/(var[0]**2))
                 return K,D*K/var[0]**3
         elif (typeK == 'Gau') and (sqEuc==False):
                 K=np.exp(-0.5*D**2/(var[0]**2))
-                return K,D**2*K/var[0]**3
+		return K,D**2*K/var[0]**3
         elif typeK == 'Exp':
                 K=np.exp(-D/var[0])
-                return K,D*K/var[0]**2
+		return K,D*K/var[0]**2
         elif typeK == 'Matern52':
-                dij = np.sqrt(5.)*D/var[0]
+		dij = np.sqrt(5.)*D/var[0]
                 K=(1.+ dij + (dij**2)/3.)*np.exp(-dij)
-                return K,-dij/var[0]*(1. + 2./3.*dij*np.exp(-dij) - dij**2/3.*np.exp(-dij))
+                return K, dij/var[0]*K - ( dij + 2.*dij**2/3.  )*np.exp(-dij)/var[0]
         else:
                 print 'Kernel of type', typeK, ' is not implemented'
 
-#Should add possibility to mix kenerls together like K1+K2, K1*K2 etc
