@@ -122,14 +122,13 @@ class KerRidgeReg:
                                 return (0.5*np.einsum("ik,ik->k",self.y,self.alpha)+0.5*np.log(np.linalg.det(self.Ker + lam*np.identity(self.Nlearn)))+0.5*self.Nlearn*np.log(2*np.pi)).sum()
                         else:
                                 return (0.5*np.einsum("ik,ik->k",self.y,self.alpha)+np.sum(np.log(np.diag(self.L)))+0.5*self.Nlearn*np.log(2*np.pi)).sum()
-			#return 0.5*self.Nlearn*np.linalg.det(self.y.transpose().dot(self.alpha)) + 2.*Nout*np.sum(np.log(np.diag(self.L)))
+			
 		else:
 			if L is None:
                                 return 0.5*self.y.transpose().dot(self.alpha) + 0.5*np.log(np.linalg.det(self.Ker + lam*np.identity(self.Nlearn))) + 0.5*self.Nlearn*np.log(2*np.pi)
                         else:
                                 return 0.5*self.y.transpose().dot(self.alpha) + np.sum(np.log(np.diag(self.L))) + 0.5*self.Nlearn*np.log(2*np.pi)
-			#return 0.5*self.y.transpose().dot(self.alpha) + np.sum(np.log(np.diag(self.L)))
-	
+			
 
 	#################################################################################################################
 	#		We also add to this class the possibility of consider it as a Gaussian process			#
@@ -158,8 +157,6 @@ class KerRidgeReg:
 			Nout=1
 		
 		tupARG=(X,y,Nlearn,typeK,typeD,mult,Nout,xinterval)
-
-		#return minimize(self.__func_LL,vars0,args=tupARG,method='Nelder-Mead',tol=1e-5)
 
 		def __constr1(x,bmin):
 			#Every hyperparameters is postive and at least bmin
@@ -210,7 +207,7 @@ class KerRidgeReg:
 				return (0.5*np.einsum("ik,ik->k",y,alpha)+0.5*np.log(np.linalg.det(Klam))+0.5*Nlearn*np.log(2*np.pi)).sum()
 			else:
 				return (0.5*np.einsum("ik,ik->k",y,alpha)+np.sum(np.log(np.diag(L)))+0.5*Nlearn*np.log(2*np.pi)).sum()
-                        	#return Nlearn*np.log( np.linalg.det( y.transpose().dot(alpha) ) ) + 2.*Nout*np.sum(np.log(np.diag(L)))
+                        	
                 else:
 
 			if L is None:
@@ -256,7 +253,7 @@ class KerRidgeReg:
                         else:
 				
                                 return (0.5*np.einsum("ik,ik->k",y,alpha)+np.sum(np.log(np.diag(L)))+0.5*Nlearn*np.log(2*np.pi)).sum(), dLL
-                                #return Nlearn*np.log( np.linalg.det( y.transpose().dot(alpha) ) ) + 2.*Nout*np.sum(np.log(np.diag(L)))
+                                
                 else:
 
 			dLL[0]=-0.5*( np.einsum("i,j,ji",alpha,alpha,dKer)-np.einsum("ij,ji",Km1,dKer) )
