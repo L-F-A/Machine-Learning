@@ -98,6 +98,7 @@ class LogisRegRegu:
 		Imat = np.identity(XX.shape[1])
                 Imat[XX.shape[1]-1][XX.shape[1]-1] = 0
 		Qmat = np.diag(p*(1-p)) 
+		#Changing for einstein sum np.einsum ?
 		return XX.transpose().dot( Qmat.dot(XX) )+lam*Imat
 
 	def train(self,X,y,lam):
