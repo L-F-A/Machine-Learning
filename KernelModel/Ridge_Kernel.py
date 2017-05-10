@@ -124,13 +124,12 @@ class KerRidgeReg:
                                 return (0.5*np.einsum("ik,ik->k",self.y,self.alpha)+0.5*np.log(np.linalg.det(self.Ker + lam*np.identity(self.Nlearn)))+0.5*self.Nlearn*np.log(2*np.pi)).sum()
                         else:
                                 return (0.5*np.einsum("ik,ik->k",self.y,self.alpha)+np.sum(np.log(np.diag(self.L)))+0.5*self.Nlearn*np.log(2*np.pi)).sum()
-			#return 0.5*self.Nlearn*np.linalg.det(self.y.transpose().dot(self.alpha)) + 2.*Nout*np.sum(np.log(np.diag(self.L)))
+			
 		else:
 			if L is None:
                                 return 0.5*self.y.transpose().dot(self.alpha) + 0.5*np.log(np.linalg.det(self.Ker + lam*np.identity(self.Nlearn))) + 0.5*self.Nlearn*np.log(2*np.pi)
                         else:
                                 return 0.5*self.y.transpose().dot(self.alpha) + np.sum(np.log(np.diag(self.L))) + 0.5*self.Nlearn*np.log(2*np.pi)
-			#return 0.5*self.y.transpose().dot(self.alpha) + np.sum(np.log(np.diag(self.L)))
 	
 
 	#################################################################################################################
@@ -164,8 +163,6 @@ class KerRidgeReg:
 		else:
 			mult=False
 			Nout=1
-
-		#return minimize(self.__func_LL,vars0,args=tupARG,method='Nelder-Mead',tol=1e-5)
 
 		def __constr1(x,bmin):
 			#Every hyperparameters is postive and at least bmin
@@ -259,8 +256,6 @@ class KerRidgeReg:
 		lam=np.abs(vars[-1])
 		var=np.abs(vars[:-1])
 
-		#print vars		
-
 		Ker=KernelCalc(X,X,Nlearn,Nlearn,var,typeK=typeK,typeD=typeD,T=True,xinterval=xinterval)
 		Klam=Ker+lam*np.identity(Nlearn)
 
@@ -271,18 +266,15 @@ class KerRidgeReg:
                 except np.linalg.linalg.LinAlgError:
 
 			print 'K+lambda*I not positive definite, solving anyway, but beware!!'
-			#print 'K+lambda*I not positive definite, returning infinite log likelihood'
-                        alpha=np.linalg.solve(Klam,y)
+			alpha=np.linalg.solve(Klam,y)
                         L=None
-			#return np.inf
-
+			
 		if mult==True:
 
 			if L is None:
 				return (0.5*np.einsum("ik,ik->k",y,alpha)+0.5*np.log(np.linalg.det(Klam))+0.5*Nlearn*np.log(2*np.pi)).sum()
 			else:
 				return (0.5*np.einsum("ik,ik->k",y,alpha)+np.sum(np.log(np.diag(L)))+0.5*Nlearn*np.log(2*np.pi)).sum()
-                        	#return Nlearn*np.log( np.linalg.det( y.transpose().dot(alpha) ) ) + 2.*Nout*np.sum(np.log(np.diag(L)))
                 else:
 
 			if L is None:
@@ -301,9 +293,6 @@ class KerRidgeReg:
                 lam=np.abs(vars[-1])
                 var=np.abs(vars[:-1])
 
-		print vars
-
-                #Ker,dKer=KernelCalcDer(X,X,Nlearn,Nlearn,var,typeK=typeK,typeD=typeD,T=True,xinterval=xinterval)
 		Ker,dKer=KernelCalcDer_withD(D,var=var,typeK=typeK,sqEuc=sqEuc)
                 Klam=Ker+lam*np.identity(Nlearn)
 
@@ -315,12 +304,10 @@ class KerRidgeReg:
                 except np.linalg.linalg.LinAlgError:
 
                         print 'K+lambda*I not positive definite, solving anyway, but beware!!'
-			#print 'K+lambda*I not positive definite, returning infinite log likelihood and zero gradient'
-                        alpha=np.linalg.solve(Klam,y)
+			alpha=np.linalg.solve(Klam,y)
                         L=None
 			Km1=sp.linalg.solve(Klam,np.identity(Nlearn))
-			#return np.inf,np.zeros_like(vars)
-
+			
 		dLL=np.zeros(len(vars))
 
                 if mult==True:
@@ -333,7 +320,7 @@ class KerRidgeReg:
                         else:
 				
                                 return (0.5*np.einsum("ik,ik->k",y,alpha)+np.sum(np.log(np.diag(L)))+0.5*Nlearn*np.log(2*np.pi)).sum(), dLL
-                                #return Nlearn*np.log( np.linalg.det( y.transpose().dot(alpha) ) ) + 2.*Nout*np.sum(np.log(np.diag(L)))
+                                
                 else:
 
 			dLL[0]=-0.5*( np.einsum("i,j,ji",alpha,alpha,dKer)-np.einsum("ij,ji",Km1,dKer) )
