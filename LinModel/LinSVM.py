@@ -105,7 +105,10 @@ class SVMClass:
 				
 				#The linear model is completely specified by the vector w
 				self.w = np.zeros(pdim+1)
+				
+				#Change this step by using np.einsum !!!!!!!!!!!!!!!!!
 				self.w[0:-1] = self.alpha[indsv].dot(np.diag(y[indsv]).dot(X[indsv]))
+				
 				#The constant term obtained by the value for each support vector and then average them
 				bias = np.mean(y[indsv]- X[indsv,:].dot(self.w[0:-1]))
 				self.w[-1] = bias
