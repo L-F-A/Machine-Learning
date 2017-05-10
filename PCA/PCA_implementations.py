@@ -43,7 +43,8 @@ class PCA:
 				self.avg=None
 
 			#Each column is a PCA basis vector
-			self.basis,self.sv,self.score=np.linalg.svd(X,full_matrices=True)
+			self.basis,self.sv=np.linalg.svd(X,full_matrices=True)[0:2]
+			self.score=X.T.dot(self.basis)
 			self.exp_var=(self.sv**2)/X.shape[1]
 			self.exp_var_percent=self.exp_var/self.exp_var.sum()
 			#var_score=np.var(self.score,axis=0)
