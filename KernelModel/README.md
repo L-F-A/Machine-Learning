@@ -8,6 +8,8 @@ Some kernel machine learning methods.
   
   4-One class SVM with Kernels
 
+More on Kernel Ridge Regression
+
 The Kernel Ridge Regression class also offers a fit method (aka Gaussian process) to obtain the hyperparameters
 by maximizing the log marginal likelihood of the training set. Two possible solvers, 'SLSQP' which does 
 not use gradients while the other, 'L-BFGS-B', does. Both solvers accepts different possibilities of Kerels/distance metrics with different numbers of hyperparameters: 
