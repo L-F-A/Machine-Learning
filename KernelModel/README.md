@@ -18,7 +18,7 @@ A total of p+1 hyperparameters {sig_d}_1^p and $\lam$, the regularization.
       
 -Gaussian 'Gau', Exponential 'Exp' or Matern 5/2 'Matern52' with one hyperparameter $\sigma$ and can consider distance metrics to          be chosen among Euclidean 'Euc', Manhattan 'Man' or Euclidean continuous 'Euc_Cont' (integral of the squared difference between           two functions). Thus a total of two hyperparameters; $\sigma$ and $\lambda$, the regularization.
       
-Still a work in progress, but tests done up to now (training set of size (1000,2049), (3000,2049, (5000,2049) and (10000,2049) and 5-20 outputs) indicates large efficiency, faster than Sklearn version for single sig cases and about the same for diagonal sig cases.
+Gaussian processes is still a work in progress, but tests done up to now (training set of size (1000,2049), (3000,2049, (5000,2049) and (10000,2049) and 5-20 outputs) indicates large efficiency, faster than Sklearn version for single sig cases and about the same for diagonal sig cases.
 
 
 To add shortly: Kernel quantile regression (as used in https://arxiv.org/abs/1612.04895 ) and Kernel Logistic regression.
