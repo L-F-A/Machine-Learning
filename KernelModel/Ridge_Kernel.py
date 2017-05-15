@@ -1,6 +1,6 @@
 import numpy as np
 import scipy as sp
-from MachineLearning.KernelModel import KernelCalc,KernelCalcDer,KernelCalcDer_withD
+from MachineLearning.KernelModel import KernelCalc,KernelCalcDer,KernelCalc_withD,KernelCalcDer_withD
 from MachineLearning.Distances import DistancesMatrix
 from scipy.optimize import minimize
 import time
@@ -124,7 +124,6 @@ class KerRidgeReg:
                                 return (0.5*np.einsum("ik,ik->k",self.y,self.alpha)+0.5*np.log(np.linalg.det(self.Ker + lam*np.identity(self.Nlearn)))+0.5*self.Nlearn*np.log(2*np.pi)).sum()
                         else:
                                 return (0.5*np.einsum("ik,ik->k",self.y,self.alpha)+np.sum(np.log(np.diag(self.L)))+0.5*self.Nlearn*np.log(2*np.pi)).sum()
-			
 		else:
 			if L is None:
                                 return 0.5*self.y.transpose().dot(self.alpha) + 0.5*np.log(np.linalg.det(self.Ker + lam*np.identity(self.Nlearn))) + 0.5*self.Nlearn*np.log(2*np.pi)
@@ -139,24 +138,11 @@ class KerRidgeReg:
 	#################################################################################################################
 
 
-	def fit_LogLike(self,X,y,vars0,typeK,typeD,tol=1e-7,solver='SLSQP',restart=None,Mess=True,bmin=1e-12,bmax=1e3,xinterval=None):
+	def fit_LogLike(self,X,y,vars0,typeK='Gau',typeD='Euc',tol=1e-7,solver='SLSQP',restart=None,Mess=True,b_sig=(1e-4,1e3),b_lam=(1e-12,1.),xinterval=None):
 
-		tK=['Gau','Exp','Matern52']
-		tD=['Euc','Euc_Cont','Man']
-		if solver=='L-BFGS-B' and ( (typeK not in tK) or (typeD not in tD) ):
+		Nlearn,Np=X.shape
 
-			print 'Solver with gradient not implemented for the choosen pair of Kernel and distance\n'
-			print 'Will use SLSQP solver instead\n'
-			solver='SLSQP'
-
-		if (restart is not None) and ( (typeK not in tK) or (typeD not in tD) ):
-
-			print 'For the moment, multiple restarts is not available for the choosen pair of Kernel and distance metric\n'
-			print 'Doing the calculation only for vars0'
-			restart=None
-	
 		#Is it a multi-outputs problem?
-		Nlearn=X.shape[0]
 		if y.ndim != 1:
 			mult=True
 			Nout=y.shape[1]
@@ -164,38 +150,45 @@ class KerRidgeReg:
 			mult=False
 			Nout=1
 
-		def __constr1(x,bmin):
-			#Every hyperparameters is postive and at least bmin
-			return x-bmin
-		def __constr2(x,bmax):
-			#Every hyperparameters is postive and at most bmax
-			return bmax-x
-
 		if restart is None:
 
 			if solver=='SLSQP':
 				#Variables that need to be passed to the solver
-                		tupARG=(X,y,Nlearn,typeK,typeD,mult,Nout,xinterval)
-				b=len(vars0)*[(bmin,bmax)]
-				return minimize(self.__func_LL,vars0,args=tupARG,method=solver,bounds=b,tol=tol,options={'disp': False, 'iprint': 1, 'eps': 1.4901161193847656e-08, 'maxiter': 100, 'ftol': 1e-06})
-		
-			elif solver=='COBYLA':
-				#Variables that need to be passed to the solver
-                		tupARG=(X,y,Nlearn,typeK,typeD,mult,Nout,xinterval)
-				return minimize(self.__func_LL,vars0,args=tupARG,method='COBYLA',constraints=({'type':'ineq','fun':__constr1,'args':([bmin])},{'type':'ineq','fun':__constr2,'args':([bmax])}),tol=tol,options={'iprint': 1, 'disp': False, 'maxiter': 1000, 'catol': 1e-7, 'rhobeg': 1.})
+				if typeK=='Gau_Diag':
+					tupARG=(X,y,Nlearn,typeK,typeD,mult,Nout,False)
+				else:
+					if (typeD=='Euc' or typeD=='Euc_Cont') and typeK=='Gau':
+                                                sqr=False
+                                                sqEuc=True
+                                        else:
+                                                sqr=True
+                                                sqEuc=False
+
+                                        D=DistancesMatrix(X,X,Nlearn,Nlearn,typeD=typeD,T=True,sqr=sqr,xinterval=xinterval)
+                                        tupARG=(D,y,Nlearn,typeK,typeD,mult,Nout,sqEuc)
+					
+				b=len(vars0)*[tuple(np.log(b_sig))]
+				b[-1]=tuple(np.log(b_lam))
+				return minimize(self.__func_LL,np.log(vars0),args=tupARG,method='SLSQP',bounds=b,tol=tol,options={'disp': False, 'iprint': 1, 'eps': 1.4901161193847656e-08, 'maxiter': 100, 'ftol': 1e-06})
 
 			elif solver=='L-BFGS-B':
-				if (typeD=='Euc' or typeD=='Euc_Cont') and typeK=='Gau':
-                        		sqr=False
-                        		sqEuc=True
-				else:
-					sqr=True
-					sqEuc=False
-				D=DistancesMatrix(X,X,Nlearn,Nlearn,typeD=typeD,T=True,sqr=sqr,xinterval=xinterval)
 				#Variables that need to be passed to the solver
-				tupARG=(D,y,Nlearn,typeK,typeD,mult,Nout,sqEuc)		
-				b=len(vars0)*[(bmin,bmax)]
-				return minimize(self.__func_LL_dLL,vars0,args=tupARG,method='L-BFGS-B',jac=True,bounds=b,tol=tol,options={'disp': None, 'maxls': 20, 'iprint': -1, 'gtol': 1e-05, 'eps': 1e-08, 'maxiter': 15000, 'ftol': 2.220446049250313e-09, 'maxcor': 10, 'maxfun': 15000})
+				if typeK=='Gau_Diag':
+					tupARG=(X,y,Nlearn,typeK,typeD,mult,Nout,False)
+				else:
+					if (typeD=='Euc' or typeD=='Euc_Cont') and typeK=='Gau':
+                        			sqr=False
+                        			sqEuc=True
+					else:
+						sqr=True
+						sqEuc=False
+
+					D=DistancesMatrix(X,X,Nlearn,Nlearn,typeD=typeD,T=True,sqr=sqr,xinterval=xinterval)
+					tupARG=(D,y,Nlearn,typeK,typeD,mult,Nout,sqEuc)
+		
+				b=len(vars0)*[tuple(np.log(b_sig))]
+				b[-1]=tuple(np.log(b_lam))
+				return minimize(self.__func_LL_dLL,np.log(vars0),args=tupARG,method='L-BFGS-B',jac=True,bounds=b,tol=tol,options={'disp': None, 'maxls': 20, 'iprint': -1, 'gtol': 1e-05, 'eps': 1e-08, 'maxiter': 15000, 'ftol': 2.220446049250313e-09, 'maxcor': 10, 'maxfun': 15000})
 
 			else:
 				print 'This solver is not implemented'
@@ -204,38 +197,50 @@ class KerRidgeReg:
 			for rrestart in xrange(restart+1):
 				
 				if rrestart!=0:
-					#We assume that the length scale sigma of the Kernel shall not be too small and that the regularization term shall not be
-					#greater than 1
-					vars0=np.array([10.**np.random.uniform(-2,np.log10(bmax)),10.**np.random.uniform(np.log10(bmin),0.)])
-				
+					if typeK=='Gau_Diag':
+						vars0=np.concatenate((10.**np.random.uniform(np.log10(b_sig[0]),np.log10(b_sig[1]))*np.ones(Np),[10.**np.random.uniform(np.log10(b_lam[0]),np.log10(b_lam[1]))]))
+					else:
+						vars0=np.array([10.**np.random.uniform(np.log10(b_sig[0]),np.log10(b_sig[1])),10.**np.random.uniform(np.log10(b_lam[0]),np.log10(b_lam[1]))])
 				if Mess==True:
                                         tstart=time.time()
 					print 'vars0 = '+str(vars0)
 
 				if solver=='SLSQP':
 					#Variables that need to be passed to the solver
-                                	tupARG=(X,y,Nlearn,typeK,typeD,mult,Nout,xinterval)
-					b=len(vars0)*[(bmin,bmax)]
-					res=minimize(self.__func_LL,vars0,args=tupARG,method=solver,bounds=b,tol=tol,options={'disp': False, 'iprint': 1, 'eps': 1.4901161193847656e-08, 'maxiter': 100, 'ftol': 1e-06})
-		
-				elif solver=='COBYLA':
-					#Variables that need to be passed to the solver
-                                	tupARG=(X,y,Nlearn,typeK,typeD,mult,Nout,xinterval)
-					res=minimize(self.__func_LL,vars0,args=tupARG,method='COBYLA',constraints=({'type':'ineq','fun':__constr1,'args':([bmin])},{'type':'ineq','fun':__constr2,'args':([bmax])}),tol=tol,options={'iprint': 1, 'disp': False, 'maxiter': 1000, 'catol': 1e-7, 'rhobeg': 1.})
+					if typeK=='Gau_Diag':
+                                        	tupARG=(X,y,Nlearn,typeK,typeD,mult,Nout,False)
+                                	else:
+                                        	if (typeD=='Euc' or typeD=='Euc_Cont') and typeK=='Gau':
+                                                	sqr=False
+                                                	sqEuc=True
+                                        	else:
+                                                	sqr=True
+                                                	sqEuc=False
+
+                                        	D=DistancesMatrix(X,X,Nlearn,Nlearn,typeD=typeD,T=True,sqr=sqr,xinterval=xinterval)
+                                        	tupARG=(D,y,Nlearn,typeK,typeD,mult,Nout,sqEuc)
+					
+					b=len(vars0)*[tuple(np.log(b_sig))]
+                                        b[-1]=tuple(np.log(b_lam))
+                                        res=minimize(self.__func_LL,np.log(vars0),args=tupARG,method=solver,bounds=b,tol=tol,options={'disp': False, 'iprint': 1, 'eps': 1.4901161193847656e-08, 'maxiter': 100, 'ftol': 1e-06})
 
 				elif solver=='L-BFGS-B':
-					if (typeD=='Euc' or typeD=='Euc_Cont') and typeK=='Gau':
-                                        	sqr=False
-                                        	sqEuc=True
-					else:
-                                        	sqr=True
-                                        	sqEuc=False
-                                	D=DistancesMatrix(X,X,Nlearn,Nlearn,typeD=typeD,T=True,sqr=sqr,xinterval=xinterval)
-                                	#Variables that need to be passed to the solver
-                                	tupARG=(D,y,Nlearn,typeK,typeD,mult,Nout,sqEuc)
-					b=len(vars0)*[(bmin,bmax)]
-					res=minimize(self.__func_LL_dLL,vars0,args=tupARG,method='L-BFGS-B',jac=True,bounds=b,tol=tol,options={'disp': None, 'maxls': 20, 'iprint': -1, 'gtol': 1e-05, 'eps': 1e-08, 'maxiter': 15000, 'ftol': 2.220446049250313e-09, 'maxcor': 10, 'maxfun': 15000})
+					#Variables that need to be passed to the solver
+					if typeK=='Gau_Diag':
+                                        	tupARG=(X,y,Nlearn,typeK,typeD,mult,Nout,False)
+                                	else:
+						if (typeD=='Euc' or typeD=='Euc_Cont') and typeK=='Gau':
+                                        		sqr=False
+                                        		sqEuc=True
+						else:
+                                        		sqr=True
+                                        		sqEuc=False
+                                		D=DistancesMatrix(X,X,Nlearn,Nlearn,typeD=typeD,T=True,sqr=sqr,xinterval=xinterval)
+                                		tupARG=(D,y,Nlearn,typeK,typeD,mult,Nout,sqEuc)
 
+					b=len(vars0)*[tuple(np.log(b_sig))]
+                                	b[-1]=tuple(np.log(b_lam))
+					res=minimize(self.__func_LL_dLL,np.log(vars0),args=tupARG,method='L-BFGS-B',jac=True,bounds=b,tol=tol,options={'disp': None, 'maxls': 20, 'iprint': -1, 'gtol': 1e-05, 'eps': 1e-08, 'maxiter': 15000, 'ftol': 2.220446049250313e-09, 'maxcor': 10, 'maxfun': 15000})
 				else:
 					print 'This solver is not implemented'
 
@@ -246,17 +251,19 @@ class KerRidgeReg:
 				if Mess==True:
 					tstop=time.time()
 					print 'Restart number '+str(rrestart+1)+' completed in '+str(tstop-tstart)+' secs'
+
 			return sol
 
-	def __func_LL(self,vars,X,y,Nlearn,typeK,typeD,mult,Nout,xinterval):
+	def __func_LL(self,logVars,X,y,Nlearn,typeK,typeD,mult,Nout,sqEuc):
 		
-		#Althought in the minimizer we have positivity constraints for all hyperparameters, if along the way 
-		#it tries a negative value, the covariance will not be positive definite. So we just avoid the negative
-		#possibility by taking positive every time
-		lam=np.abs(vars[-1])
-		var=np.abs(vars[:-1])
+		lam=np.exp(logVars[-1])
+		var=np.exp(logVars[:-1])
 
-		Ker=KernelCalc(X,X,Nlearn,Nlearn,var,typeK=typeK,typeD=typeD,T=True,xinterval=xinterval)
+		
+		if typeK=='Gau_Diag':
+			Ker=KernelCalc(X/var,X/var,Nlearn,Nlearn,np.array([1.]),typeK='Gau',typeD='Euc',T=True)
+		else:
+ 			Ker=KernelCalc_withD(X,var=var,typeK=typeK,sqEuc=sqEuc)
 		Klam=Ker+lam*np.identity(Nlearn)
 
                 try:
@@ -266,9 +273,9 @@ class KerRidgeReg:
                 except np.linalg.linalg.LinAlgError:
 
 			print 'K+lambda*I not positive definite, solving anyway, but beware!!'
-			alpha=np.linalg.solve(Klam,y)
+                        alpha=np.linalg.solve(Klam,y)
                         L=None
-			
+
 		if mult==True:
 
 			if L is None:
@@ -282,18 +289,19 @@ class KerRidgeReg:
 			else:
                         	return 0.5*y.transpose().dot(alpha) + np.sum(np.log(np.diag(L))) + 0.5*Nlearn*np.log(2*np.pi)
 
-	def __func_LL_dLL(self,vars,D,y,Nlearn,typeK,typeD,mult,Nout,sqEuc):#,xinterval):
+	def __func_LL_dLL(self,logVars,X,y,Nlearn,typeK,typeD,mult,Nout,sqEuc):
 	
-	#Return derivatives as well! Only implemented for Kernels with unique hyperparameters sig: 'Gau','Exp','Matern52' with distances 'Euc'
-	#'Euc_cont' and 'Man'
+	#Return derivatives as well! Implemented for Kernels with unique hyperparameters sig: 'Gau','Exp','Matern52' with distances 'Euc'
+	#'Euc_cont' and 'Man' as well as 'Gau' with diagonal covariance. 
 			
-                #Althought in the minimizer we have positivity constraints for all hyperparameters, if along the way
-                #it tries a negative value, the covariance will not be positive definite. So we just avoid the negative
-                #possibility by taking positive every time
-                lam=np.abs(vars[-1])
-                var=np.abs(vars[:-1])
+                lam=np.exp(logVars[-1])
+                var=np.exp(logVars[:-1])
+		
 
-		Ker,dKer=KernelCalcDer_withD(D,var=var,typeK=typeK,sqEuc=sqEuc)
+		if typeK=='Gau_Diag':
+                	Ker,dKer=KernelCalcDer(X,X,Nlearn,Nlearn,var=var,typeK=typeK,T=True,dK_dlntheta=True)
+		else:
+			Ker,dKer=KernelCalcDer_withD(X,var=var,typeK=typeK,sqEuc=sqEuc,dK_dlntheta=True)
                 Klam=Ker+lam*np.identity(Nlearn)
 
                 try:
@@ -304,27 +312,30 @@ class KerRidgeReg:
                 except np.linalg.linalg.LinAlgError:
 
                         print 'K+lambda*I not positive definite, solving anyway, but beware!!'
-			alpha=np.linalg.solve(Klam,y)
+                        alpha=np.linalg.solve(Klam,y)
                         L=None
 			Km1=sp.linalg.solve(Klam,np.identity(Nlearn))
-			
-		dLL=np.zeros(len(vars))
+
+		dLL=np.zeros(len(logVars))
 
                 if mult==True:
 
-			dLL[0]=-0.5*( np.einsum("ik,kj,ji",alpha,alpha.T,dKer)-Nout*np.einsum("ij,ji",Km1,dKer) )
-			dLL[1]=-0.5*( np.einsum("ij,ji",alpha,alpha.T)-Nout*np.trace(Km1)  )				
+			if typeK=='Gau_Diag':
+				dLL[:-1]=-0.5*( np.einsum("ik,kj,pji",alpha,alpha.T,dKer.T)-Nout*np.einsum("ij,pji",Km1,dKer.T) )
+			else:
+				dLL[0]=-0.5*( np.einsum("ik,kj,ji",alpha,alpha.T,dKer)-Nout*np.einsum("ij,ji",Km1,dKer) )
+			dLL[-1]=-0.5*( np.einsum("ij,ji",alpha,alpha.T)-Nout*np.trace(Km1)  )*lam				
 
                         if L is None:
                                 return (0.5*np.einsum("ik,ik->k",y,alpha)+0.5*np.log(np.linalg.det(Klam))+0.5*Nlearn*np.log(2*np.pi)).sum(), dLL
                         else:
-				
                                 return (0.5*np.einsum("ik,ik->k",y,alpha)+np.sum(np.log(np.diag(L)))+0.5*Nlearn*np.log(2*np.pi)).sum(), dLL
-                                
                 else:
-
-			dLL[0]=-0.5*( np.einsum("i,j,ji",alpha,alpha,dKer)-np.einsum("ij,ji",Km1,dKer) )
-                        dLL[1]=-0.5*( np.einsum("i,i",alpha,alpha)-np.trace(Km1) )
+			if typeK=='Gau_Diag':
+				dLL[:-1]=-0.5*( np.einsum("i,j,pji",alpha,alpha,dKer.T)-np.einsum("ij,pji",Km1,dKer.T) )
+			else:
+				dLL[0]=-0.5*( np.einsum("i,j,ji",alpha,alpha,dKer)-np.einsum("ij,ji",Km1,dKer) )
+                        dLL[-1]=-0.5*( np.einsum("i,i",alpha,alpha)-np.trace(Km1) )*lam
 
                         if L is None:
                                 return 0.5*y.transpose().dot(alpha) + 0.5*np.log(np.linalg.det(Klam)) + 0.5*Nlearn*np.log(2*np.pi), dLL
