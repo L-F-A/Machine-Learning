@@ -97,7 +97,7 @@ class Kmeans:
                                 self.count = count
                                 self.iterinit = rinit
 				self.inertia=inertia
-                        inertia0 = inertia
+                        	inertia0 = inertia
 	
 	def query(self,Xt):
 	#Gives the cluster's indice of each member of Xt
