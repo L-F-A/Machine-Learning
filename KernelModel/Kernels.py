@@ -32,6 +32,9 @@ def KernelCalc(X,Xt,Nl,Nt,var=None,typeK='Poly',typeD=None,T=False,xinterval=Non
 		elif (typeD == 'Euc_Cont') and (typeK == 'Gau'):
 			D = DistancesMatrix(X,Xt,Nl,Nt,typeD='Euc_Cont',T=T,sqr=False,xinterval=xinterval)
                         return np.exp(-0.5*D/(var[0]**2))
+		elif typeK=='Gau_Diag':
+                        D=DistancesMatrix(X/var,Xt/var,Nl,Nt,typeD='Euc',T=T,sqr=False)
+                        return np.exp(-0.5*D)
 		else:
 			if   typeD == 'Euc':
 				D = DistancesMatrix(X,Xt,Nl,Nt,typeD='Euc',T=T,sqr=True) 
